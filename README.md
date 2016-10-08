@@ -6,5 +6,8 @@ savings account, so it's there to pay your balance at the end of the month.
 Download/clone this repository and install dependencies using `npm install`.
 Afterwards, run the tool using: `node index.js`
 
+Currently it fetches transactions for the provided date from Capital One
+Credit Cards via the Capital One 360 login.
+
 [0]: https://img.shields.io/badge/stability-experimental-orange.svg?style=flat-square
 [1]: https://nodejs.org/api/documentation.html#documentation_stability_index
