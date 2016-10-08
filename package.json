@@ -1,0 +1,16 @@
+{
+  "name": "credit-card-set-asider",
+  "version": "0.1.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "timwis <tim@timwis.com>",
+  "license": "MIT",
+  "dependencies": {
+    "nightmare": "^2.7.0",
+    "prompt": "^1.0.0"
+  }
+}
