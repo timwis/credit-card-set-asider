@@ -9,7 +9,6 @@ const config = {
       url: 'https://secure.capitalone360.com/myaccount/banking/login.vm',
       usernameInput: 'form#Signin [name="publicUserId"]',
       usernameSubmitBtn: '#btn_continue',
-      passwordForm: '#PasswordForm',
       passwordInput: '[name="currentPassword_TLNPI"]',
       passwordSubmitBtn: '#PasswordForm a.ada-new-win',
       accountSummaryTable: '#deposittable'
@@ -48,7 +47,9 @@ prompt.start()
 const promptConfig = [
   { name: 'username', required: true },
   { name: 'password', required: true, hidden: true },
-  { name: 'date', default: format(Date.now(), 'YYYY-MM-DD') }
+  { name: 'date', default: format(Date.now(), 'YYYY-MM-DD') },
+  { name: 'fromAccount' },
+  { name: 'toAccount' }
 ]
 
 if (process.argv.length > 1) {
@@ -58,22 +59,24 @@ if (process.argv.length > 1) {
 prompt.get(promptConfig, (err, input) => {
   if (err) return console.error(err)
 
-  Nightmare({ show: true })
-    .goto(config.bank.login.url)
+  const nightmare = Nightmare({ show: true })
+  // First, login via bank site
+  nightmare.goto(config.bank.login.url)
     .type(config.bank.login.usernameInput, input.username)
     .click(config.bank.login.usernameSubmitBtn)
-    .wait(config.bank.login.passwordForm)
+    .wait(config.bank.login.passwordInput)
     .wait(1000)
     .type(config.bank.login.passwordInput, input.password)
     .click(config.bank.login.passwordSubmitBtn)
     .wait(config.bank.login.accountSummaryTable)
-    // .evaluate((config) => {
-    //   return document.querySelector(config.bank.accountSummaryTable).innerText
-    // }, config)
+
+    // Naviagate to credit card site
     .goto(config.cc.url)
     .click(config.cc.transactionsLink)
     .wait(config.cc.transactionsContainer)
     .click(config.cc.pending.toggleLink)
+
+    // Extract all transactions, posted and pending
     .evaluate((config, input) => {
       // Posted transactions
       const postedRowEls = Array.from(document.querySelectorAll(config.cc.posted.rows))
@@ -100,15 +103,26 @@ prompt.get(promptConfig, (err, input) => {
         return Number(currency.replace(/[^0-9\.-]+/g, ''))
       }
     }, config, input)
-    .end()
+    // .end()
     .then((transactions) => {
       const filteredTransactions = transactions.filter((transaction) => {
         return transaction.amount > 0 && isSameDay(transaction.date, input.date)
       })
       console.log(filteredTransactions)
 
-      const total = filteredTransactions.reduce((accum, transaction) => accum + transaction.amount, 0)
+      const total = filteredTransactions.reduce((accum, transaction) => accum + transaction.amount, 0).toFixed(2)
       console.log('total', total)
+
+      const formattedDate = format(input.date, 'YYYY-MM-DD')
+
+      nightmare.goto(config.bank.transfer.url)
+        .type(config.bank.transfer.amount, total)
+        .type(config.bank.transfer.memo, `CC spending ${formattedDate}`)
+        .select(config.bank.transfer.fromAccount, input.fromAccount)
+        .select(config.bank.transfer.toAccount, input.toAccount)
+        .wait(5000)
+        .end()
+        .then()
     })
     .catch((err) => console.error('Failed', err))
 })
