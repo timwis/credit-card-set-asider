@@ -1,46 +1,10 @@
 const prompt = require('prompt')
+const argv = require('minimist')(process.argv.slice(2))
 const Nightmare = require('nightmare')
 const isSameDay = require('date-fns/is_same_day')
 const format = require('date-fns/format')
 
-const config = {
-  bank: {
-    login: {
-      url: 'https://secure.capitalone360.com/myaccount/banking/login.vm',
-      usernameInput: 'form#Signin [name="publicUserId"]',
-      usernameSubmitBtn: '#btn_continue',
-      passwordInput: '[name="currentPassword_TLNPI"]',
-      passwordSubmitBtn: '#PasswordForm a.ada-new-win',
-      accountSummaryTable: '#deposittable'
-    },
-    transfer: {
-      url: 'https://secure.capitalone360.com/myaccount/banking/deposit_transfer_input.vm',
-      amount: '#amount',
-      memo: '#depositTransferMemo',
-      fromAccount: '#sourceAccountNumber',
-      toAccount: '#destinationAccountNumber'
-    }
-  },
-  cc: {
-    url: 'https://services2.capitalone.com/accounts',
-    transactionsLink: '#transactionsLink0',
-    transactionsContainer: '#transactionsBricklet',
-    posted: {
-      table: '#postedTransactionTable',
-      rows: '#postedTransactionTable .transaction',
-      date: '.date span',
-      amount: '.amount',
-      merchant: '.merchant span'
-    },
-    pending: {
-      toggleLink: '.pending-toggle',
-      rows: '#pendingTransactionTable .tr.pending',
-      date: '.date',
-      amount: '.amount',
-      merchant: '.merchant'
-    }
-  }
-}
+const config = require('./config')
 
 prompt.start()
 
@@ -48,13 +12,11 @@ const promptConfig = [
   { name: 'username', required: true },
   { name: 'password', required: true, hidden: true },
   { name: 'date', default: format(Date.now(), 'YYYY-MM-DD') },
-  { name: 'fromAccount' },
-  { name: 'toAccount' }
+  { name: 'from' },
+  { name: 'to' }
 ]
 
-if (process.argv.length > 1) {
-  prompt.override = { date: process.argv[2] }
-}
+prompt.override = argv
 
 prompt.get(promptConfig, (err, input) => {
   if (err) return console.error(err)
@@ -103,7 +65,6 @@ prompt.get(promptConfig, (err, input) => {
         return Number(currency.replace(/[^0-9\.-]+/g, ''))
       }
     }, config, input)
-    // .end()
     .then((transactions) => {
       const filteredTransactions = transactions.filter((transaction) => {
         return transaction.amount > 0 && isSameDay(transaction.date, input.date)
@@ -115,12 +76,16 @@ prompt.get(promptConfig, (err, input) => {
 
       const formattedDate = format(input.date, 'YYYY-MM-DD')
 
-      nightmare.goto(config.bank.transfer.url)
+      if (total < 0) return
+
+      return nightmare.goto(config.bank.transfer.url)
         .type(config.bank.transfer.amount, total)
         .type(config.bank.transfer.memo, `CC spending ${formattedDate}`)
-        .select(config.bank.transfer.fromAccount, input.fromAccount)
-        .select(config.bank.transfer.toAccount, input.toAccount)
-        .wait(5000)
+        .select(config.bank.transfer.fromAccount, input.from)
+        .select(config.bank.transfer.toAccount, input.to)
+        .click(config.bank.transfer.continueBtn)
+        .wait(config.bank.transfer.validateForm)
+        .click(config.bank.transfer.confirmBtn)
         .end()
         .then()
     })
