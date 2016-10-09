@@ -1,9 +1,13 @@
-# Credit Card Set Asider [![stability: experimental][0]][1]
+# Credit Card Set Asider
 Monitors daily credit card activity & sets aside a percentage of it in your
 savings account, so it's there to pay your balance at the end of the month.
 
-Currently it fetches transactions for the provided date from Capital One
-Credit Cards via the Capital One 360 login.
+Currently it uses [NightmareJS](https://github.com/segmentio/nightmare) to fetch
+transactions for the provided date from a Capital One Credit Card and transfers
+the specified percentage from checking to savings within Capital One 360.
+
+I'd add a screencap demo but I don't know how to blur/redact parts of a .gif.
+[Do you know how?](https://github.com/timwis/credit-card-set-asider/issues/new)
 
 ## Usage
 ```
@@ -32,6 +36,3 @@ variables, command line arguments, and prompt responses.
 
 ## Installation
 Download/clone this repository and install dependencies using `npm install`.
-
-[0]: https://img.shields.io/badge/stability-experimental-orange.svg?style=flat-square
-[1]: https://nodejs.org/api/documentation.html#documentation_stability_index
