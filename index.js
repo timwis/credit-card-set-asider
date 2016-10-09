@@ -10,6 +10,7 @@ const defaultDate = format(Date.now(), 'YYYY-MM-DD')
 
 const argv = yargs
   .env('CC')
+  .usage('$0 -u [username] -d [date] --from [account] --to [account] --percent [num]')
   .option('username', { alias: 'u', describe: 'Bank account username' })
   .option('password', { alias: 'p', describe: 'Bank account password (omit for prompt)' })
   .option('date', { alias: 'd', describe: 'Date of transactions (YYYY-MM-DD)' })
